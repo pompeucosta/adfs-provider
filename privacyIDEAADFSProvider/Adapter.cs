@@ -47,6 +47,8 @@ namespace privacyIDEAADFSProvider
         public IAdapterPresentation BeginAuthentication(Claim identityClaim, HttpListenerRequest request,
             IAuthenticationContext authContext)
         {
+            
+
             Log("BeginAuthentication: identityClaim: " + identityClaim.Value);
             string username, domain;
             // separates the username from the domain
@@ -550,6 +552,24 @@ namespace privacyIDEAADFSProvider
                     Log("No values for header " + header + " found.");
                 }
             }
+
+            // Get the remote address and add it to the headers
+            string ip = request.RemoteEndPoint.Address.ToString();
+            string forwardedFor = request.Headers["X-Forwarded-For"];
+
+            if (!string.IsNullOrEmpty(forwardedFor))
+            {
+                string[] ipList = forwardedFor.Split(',');
+                string clientIP = ipList[0].Trim();
+                ip = clientIP;
+            }
+
+            string service = request.ServiceName;
+            if (!string.IsNullOrEmpty(service))
+                headersToForward.Add(new KeyValuePair<string, string>("ServiceID", service));
+
+            headersToForward.Add(new KeyValuePair<string, string>("X-Forwarded-For", ip));
+
             return headersToForward;
         }
 
